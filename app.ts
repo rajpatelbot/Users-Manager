@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./db/mongoose";
 
-import userRouters from "./routes/userRoutes";
+import userRouters from "./routers/user";
 
 dotenv.config();
 

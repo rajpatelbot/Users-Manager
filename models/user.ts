@@ -8,14 +8,15 @@ const userSchema = new Schema<UserDocument>({
   },
   mobile: {
     type: String,
+    unique: true,
     required: true,
   },
-  state: {
+  stateId: {
     type: Schema.Types.ObjectId,
     ref: "Location",
     required: true,
   },
-  city: {
+  cityId: {
     type: Schema.Types.ObjectId,
     ref: "Location.state.city",
     required: true,

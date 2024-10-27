@@ -4,8 +4,8 @@ export interface UserDocument extends Document {
   _id: Schema.Types.ObjectId;
   name: string;
   mobile: string;
-  city: Schema.Types.ObjectId;
-  state: Schema.Types.ObjectId;
+  cityId: Schema.Types.ObjectId;
+  stateId: Schema.Types.ObjectId;
 }
 
 export interface LocationDocument extends Document {
