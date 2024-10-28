@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import connectDB from "./db/mongoose";
 
 import userRouters from "./routers/user";
+import locationRouters from "./routers/location";
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ app.get("/health-check", (_req, res) => {
 });
 
 app.use(userRouters);
+app.use(locationRouters);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

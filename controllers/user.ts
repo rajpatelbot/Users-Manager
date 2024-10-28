@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
 import { User } from "../models/user";
 import { Location } from "../models/location";
-import { RESPONSE_MESSAGE, STATUS_CODES } from "../utils/response";
-import { logger } from "../utils/logger";
-import { Error } from "mongoose";
+import { ResponseFormatter, STATUS_CODES } from "../utils/response";
 
 export const createUser = async (req: Request, res: Response) => {
+  const response = new ResponseFormatter(req, res);
+
   try {
     const { name, mobile, stateId, cityId } = req.body;
 
@@ -13,33 +13,34 @@ export const createUser = async (req: Request, res: Response) => {
     const isUserExist = await User.findOne({ mobile });
 
     if (isUserExist) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "User already exists." });
+      throw "User already exists.";
     }
 
     // Check if given state and city exists in DB.
     const state = await Location.findOne({ _id: stateId });
 
     if (!state) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "State does not exist." });
+      throw "State does not exist.";
     }
 
-    const isCityExist = state.cities.map((city) => city._id.toString()).includes(cityId);
+    const isCityExist = state?.cities.map((city) => city._id.toString()).includes(cityId);
 
     if (!isCityExist) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "City does not exist." });
+      throw "City does not exist.";
     }
 
     await User.create({ name, mobile, stateId, cityId });
 
-    return res.status(STATUS_CODES.CREATED).json({ success: true, message: "User created successfully." });
-  } catch (error) {
-    const err = error as Error;
-    logger.error(err.message);
-    return res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, error: RESPONSE_MESSAGE.SERVER_ERROR });
+    response.status(STATUS_CODES.CREATED).message("User created successfully.").success(true).send();
+  } catch (e) {
+    const err = e as string;
+    response.status(STATUS_CODES.BAD_REQUEST).data({}).error(err).success(false).send();
   }
 };
 
 export const getUsers = async (req: Request, res: Response) => {
+  const response = new ResponseFormatter(req, res);
+
   try {
     const users = await User.aggregate([
       {
@@ -63,37 +64,68 @@ export const getUsers = async (req: Request, res: Response) => {
       },
     ]);
 
-    return res.status(STATUS_CODES.OK).json({ success: true, data: users });
-  } catch (error) {
-    const err = error as Error;
-    logger.error(err.message);
-    return res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, error: RESPONSE_MESSAGE.SERVER_ERROR });
+    response.status(STATUS_CODES.OK).data(users).message("User fetched successfully.").success(true).send();
+  } catch (e) {
+    const err = e as string;
+    response.status(STATUS_CODES.BAD_REQUEST).data({}).error(err).success(false).send();
   }
 };
 
-export const updateUsers = async (req: Request, res: Response) => {};
+export const updateUser = async (req: Request, res: Response) => {
+  const response = new ResponseFormatter(req, res);
 
-export const deleteUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const { name, mobile, stateId, cityId } = req.body;
 
     if (!id) {
-      logger.error("Id is required for deleting a user.");
-      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Something went wrong." });
+      throw "Something went wrong.";
     }
 
     const isUserExist = await User.findOne({ _id: id });
 
     if (!isUserExist) {
-      logger.error("User does not exist.");
-      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "User does not exist." });
+      throw "User does not exist.";
+    }
+
+    await User.updateOne(
+      { _id: id },
+      {
+        name,
+        mobile,
+        stateId,
+        cityId,
+      }
+    );
+
+    response.status(STATUS_CODES.OK).message("User updated successfully.").success(true).send();
+  } catch (e) {
+    const err = e as string;
+    response.status(STATUS_CODES.BAD_REQUEST).data({}).error(err).success(false).send();
+  }
+};
+
+export const deleteUser = async (req: Request, res: Response) => {
+  const response = new ResponseFormatter(req, res);
+
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      throw "Something went wrong.";
+    }
+
+    const isUserExist = await User.findOne({ _id: id });
+
+    if (!isUserExist) {
+      throw "User does not exist.";
     }
 
     await User.deleteOne({ _id: id });
-    return res.status(STATUS_CODES.OK).json({ success: true, message: "User deleted successfully." });
-  } catch (error) {
-    const err = error as Error;
-    logger.error(err.message);
-    return res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, error: RESPONSE_MESSAGE.SERVER_ERROR });
+
+    response.status(STATUS_CODES.OK).message("User deleted successfully.").success(true).send();
+  } catch (e) {
+    const err = e as string;
+    response.status(STATUS_CODES.BAD_REQUEST).data({}).error(err).success(false).send();
   }
 };

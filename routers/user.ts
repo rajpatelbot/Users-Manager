@@ -1,13 +1,13 @@
-import * as express from "express";
-import { createUser, deleteUser, getUsers } from "../controllers/user";
+import { Router } from "express";
+import { createUser, deleteUser, getUsers, updateUser } from "../controllers/user";
+import { validateData } from "../middlewares/validationMiddleware";
+import { updateUserSchema, createUserSchema } from "../validation/userSchema";
 
-const router = express.Router();
+const userRouters = Router();
 
-// @ts-ignore
-router.post("/create-user", createUser);
-// @ts-ignore
-router.get("/get-users", getUsers);
-// @ts-ignore
-router.delete("/delete-user/:id", deleteUser);
+userRouters.post("/create-user", validateData(createUserSchema), createUser);
+userRouters.get("/get-users", getUsers);
+userRouters.put("/update-user/:id", validateData(updateUserSchema), updateUser);
+userRouters.delete("/delete-user/:id", deleteUser);
 
-export default router;
+export default userRouters;
