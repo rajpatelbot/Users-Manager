@@ -21,13 +21,14 @@ const initialValues: FormValues = {
 const AddForm = ({ fetchApi }: { fetchApi: (updatedUrl?: string, loading?: boolean) => void }) => {
   const [loading, setLoading] = useState(false);
 
-  const { user } = useContext(Context);
+  const { user, setUser } = useContext(Context);
 
   const {
     register,
     handleSubmit,
     watch,
     setValue,
+    reset,
     formState: { errors, isValid },
   } = useForm<FormValues>({
     defaultValues: initialValues,
@@ -42,11 +43,15 @@ const AddForm = ({ fetchApi }: { fetchApi: (updatedUrl?: string, loading?: boole
       setValue("name", user.name, { shouldValidate: true, shouldTouch: true });
       setValue("stateId", user.state._id, { shouldValidate: true, shouldTouch: true });
       setValue("mobile", user.mobile, { shouldValidate: true, shouldTouch: true });
-      if (selectedStateId) {
-        setValue("cityId", user.state.city._id, { shouldValidate: true, shouldTouch: true });
+
+      if (user.state._id) {
+        const userCityId = user.state.city._id;
+        setValue("cityId", userCityId, { shouldValidate: true, shouldTouch: true });
+      } else {
+        setValue("cityId", "");
       }
     }
-  }, [user, selectedStateId]);
+  }, [user, setValue]);
 
   const cities = useMemo(() => {
     if (locations && locations?.data.length > 0 && selectedStateId) {
@@ -65,10 +70,30 @@ const AddForm = ({ fetchApi }: { fetchApi: (updatedUrl?: string, loading?: boole
       if (res.success) {
         toast.success(res.message);
         fetchApi(`${api.getUsers}`);
-        setValue("name", "");
-        setValue("mobile", "");
-        setValue("stateId", "");
-        setValue("cityId", "");
+        setUser(null);
+        reset();
+      } else {
+        toast.error(res.errors);
+      }
+    } catch (error) {
+      handleCatchResponse(error as AxiosError);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onUpdate: SubmitHandler<FormValues> = async (data) => {
+    try {
+      setLoading(true);
+
+      const response = await dataService.put(`${api.updateUser}/${user?._id}`, data);
+      const res: Required<IResponse<{}>> = response.data;
+
+      if (res.success) {
+        toast.success(res.message);
+        fetchApi(`${api.getUsers}`);
+        setUser(null);
+        reset();
       } else {
         toast.error(res.errors);
       }
@@ -81,7 +106,10 @@ const AddForm = ({ fetchApi }: { fetchApi: (updatedUrl?: string, loading?: boole
 
   return (
     <div className="flex items-center justify-center">
-      <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-md bg-white p-6 rounded-lg shadow-lg">
+      <form
+        onSubmit={handleSubmit(user ? onUpdate : onSubmit)}
+        className="w-full max-w-md bg-white p-6 rounded-lg shadow-lg"
+      >
         <h2 className="text-2xl font-bold mb-6 text-center text-gray-700">Registration Form</h2>
 
         <div className="mb-4">
@@ -116,9 +144,11 @@ const AddForm = ({ fetchApi }: { fetchApi: (updatedUrl?: string, loading?: boole
             {...register("stateId", { required: "State is required" })}
             className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:ring-indigo-200"
           >
-            <option>Select a state</option>
+            <option value="">Select State</option>
             {locations?.data?.map((lc) => (
-              <option value={lc._id}>{lc.state}</option>
+              <option key={lc._id} value={lc._id}>
+                {lc.state}
+              </option>
             ))}
           </select>
           {errors.stateId && <p className="text-red-500 text-sm">{errors.stateId.message}</p>}
@@ -131,9 +161,11 @@ const AddForm = ({ fetchApi }: { fetchApi: (updatedUrl?: string, loading?: boole
             className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:ring-indigo-200"
             disabled={!selectedStateId}
           >
-            <option>Select a city</option>
+            <option value="">Select City</option>
             {cities?.map((city) => (
-              <option value={city._id}>{city.name}</option>
+              <option key={city._id} value={city._id}>
+                {city.name}
+              </option>
             ))}
           </select>
           {errors.cityId && <p className="text-red-500 text-sm">{errors.cityId.message}</p>}
@@ -143,7 +175,7 @@ const AddForm = ({ fetchApi }: { fetchApi: (updatedUrl?: string, loading?: boole
           className="w-full h-12 text-white bg-indigo-500 rounded-md hover:bg-indigo-600 focus:outline-none focus:bg-indigo-700"
           disabled={!isValid}
         >
-          {!loading ? "Register" : <Loader />}
+          {!loading ? user ? "Update" : "Register" : <Loader />}
         </button>
       </form>
     </div>
