@@ -39,12 +39,14 @@ const AddForm = ({ fetchApi }: { fetchApi: (updatedUrl?: string, loading?: boole
 
   useEffect(() => {
     if (user) {
-      setValue("stateId", user.state._id);
-      setValue("cityId", user.state.city._id);
-      setValue("name", user.name);
-      setValue("mobile", user.mobile);
+      setValue("name", user.name, { shouldValidate: true, shouldTouch: true });
+      setValue("stateId", user.state._id, { shouldValidate: true, shouldTouch: true });
+      setValue("mobile", user.mobile, { shouldValidate: true, shouldTouch: true });
+      if (selectedStateId) {
+        setValue("cityId", user.state.city._id, { shouldValidate: true, shouldTouch: true });
+      }
     }
-  }, [user]);
+  }, [user, selectedStateId]);
 
   const cities = useMemo(() => {
     if (locations && locations?.data.length > 0 && selectedStateId) {
@@ -63,6 +65,10 @@ const AddForm = ({ fetchApi }: { fetchApi: (updatedUrl?: string, loading?: boole
       if (res.success) {
         toast.success(res.message);
         fetchApi(`${api.getUsers}`);
+        setValue("name", "");
+        setValue("mobile", "");
+        setValue("stateId", "");
+        setValue("cityId", "");
       } else {
         toast.error(res.errors);
       }
