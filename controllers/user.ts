@@ -44,16 +44,39 @@ export const getUsers = async (req: Request, res: Response) => {
   try {
     const users = await User.aggregate([
       {
+        // This is for join the user and location collection.
         $lookup: {
-          from: "locations",
-          localField: "stateId",
-          foreignField: "_id",
-          as: "state",
+          from: "locations", // collection name.
+          let: { stateId: "$stateId", cityId: "$cityId" }, // fields to consider.
+          pipeline: [
+            {
+              // match the document from location, which is user's stateId.
+              $match: {
+                $expr: { $eq: ["$_id", "$$stateId"] },
+              },
+            },
+            {
+              // unwind the document from location, from array to object.
+              $unwind: "$cities",
+            },
+            {
+              // match the document from location, which is user's cityId.
+              $match: {
+                $expr: { $eq: ["$cities._id", "$$cityId"] },
+              },
+            },
+            {
+              // project the document from location like which field to send in response.
+              $project: {
+                state: 1,
+                city: "$cities",
+              },
+            },
+          ],
+          as: "state", // fields name of the response.
         },
       },
-      {
-        $unwind: "$state",
-      },
+      { $unwind: "$state" },
       {
         $project: {
           __v: 0,
