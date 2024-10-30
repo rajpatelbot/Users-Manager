@@ -75,10 +75,10 @@ const UserTable = ({ fetchApi, users, loading }: UserTableProps) => {
                 <td className="py-2 px-4">{user.state.state}</td>
                 <td className="py-2 px-4">{user.state.city.name}</td>
                 <td className="py-2 px-4 flex space-x-2">
-                  <button className="text-green-500" onClick={() => editUser(user)}>
+                  <button type="button" className="text-green-500" onClick={() => editUser(user)}>
                     <MdEdit />
                   </button>
-                  <button className="text-red-500" onClick={() => deleteUser(user._id)}>
+                  <button type="button" className="text-red-500" onClick={() => deleteUser(user._id)}>
                     <MdDelete />
                   </button>
                 </td>

@@ -43,15 +43,17 @@ const AddForm = ({ fetchApi }: { fetchApi: (updatedUrl?: string, loading?: boole
       setValue("name", user.name, { shouldValidate: true, shouldTouch: true });
       setValue("stateId", user.state._id, { shouldValidate: true, shouldTouch: true });
       setValue("mobile", user.mobile, { shouldValidate: true, shouldTouch: true });
-
-      if (user.state._id) {
-        const userCityId = user.state.city._id;
-        setValue("cityId", userCityId, { shouldValidate: true, shouldTouch: true });
-      } else {
-        setValue("cityId", "");
-      }
     }
   }, [user, setValue]);
+
+  useEffect(() => {
+    if (user && selectedStateId) {
+      const userCityId = user.state.city._id;
+      setValue("cityId", userCityId, { shouldValidate: true, shouldTouch: true });
+    } else {
+      setValue("cityId", "");
+    }
+  }, [user, selectedStateId]);
 
   const cities = useMemo(() => {
     if (locations && locations?.data.length > 0 && selectedStateId) {
