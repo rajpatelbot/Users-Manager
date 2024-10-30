@@ -1,5 +1,4 @@
 import { AxiosError } from "axios";
-import { UNAUTHORIZE_STATUS_CODE } from "./constant";
 import toast from "react-hot-toast";
 
 export const handleCatchResponse = (error: AxiosError, setErrMessage?: any) => {
@@ -23,9 +22,6 @@ export const handleErrorForFetch = async (
   let message = "Something went wrong!";
   for (const key in error) {
     if (key === "request") {
-      if (error[key].status === UNAUTHORIZE_STATUS_CODE) {
-        window.location.reload();
-      }
       const responseMessage = await JSON.parse(JSON.stringify(error[key].response));
       message = responseMessage.message ?? "Something went wrong!";
     }
